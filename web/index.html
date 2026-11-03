@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casefile</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 22 24%22%3E%3Cpath d=%22M2 0h18v17l-9 7-9-7z%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#e8ecf1; --sheet:#f7f9fb; --ink:#14213d; --ink-2:#3d4a63; --ink-3:#6b7690;
+  --rule:#cfd6e0; --marker:#f2c14e; --marker-ink:#2b2100;
+  --ok:#2e7d5b; --ok-bg:#e3f1ea; --warn:#a8650d; --warn-bg:#fbefd9; --bad:#b8410f; --bad-bg:#fbe5dc;
+  --focus:#2f6fdd;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;display:flex;flex-direction:column}
+button,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+code,pre,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+/* header */
+header{display:flex;align-items:center;gap:20px;padding:12px 24px;background:var(--ink);color:#e8ecf1}
+.brand{display:flex;align-items:center;gap:10px;font:700 20px/1 "IBM Plex Sans Condensed",sans-serif;letter-spacing:.01em}
+.brand svg{flex:none}
+.tagline{color:#a9b4c8;font-size:13px}
+.models{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.model{font-size:12px;padding:4px 10px;border-radius:999px;background:#22314f;color:#d5dcea;white-space:nowrap}
+.model b{font-weight:600;color:#fff}
+.model.off{background:#4a2a20;color:#ffd9c9}
+
+/* layout */
+main{flex:1;display:grid;grid-template-columns:340px minmax(0,1fr) minmax(0,1.15fr);gap:0;min-height:0}
+section.col{min-height:0;overflow:auto;padding:20px 22px 40px}
+section.col+section.col{border-left:1px solid var(--rule)}
+h2{font:600 13px/1.2 "IBM Plex Sans",sans-serif;color:var(--ink-3);margin:0 0 12px;letter-spacing:.02em}
+h2 .count{color:var(--ink-2)}
+
+/* intake */
+.scenarios{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.scenario{text-align:left;border:1px solid var(--rule);background:var(--sheet);border-radius:8px;padding:10px 12px;cursor:pointer}
+.scenario[aria-pressed=true]{border-color:var(--ink);box-shadow:inset 3px 0 0 var(--ink)}
+.scenario strong{display:block;font-weight:600}
+.scenario span{font-size:12.5px;color:var(--ink-3)}
+.ticket{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:12px;font-size:13.5px;color:var(--ink-2);margin-bottom:14px}
+.shot{display:block;width:100%;border-radius:8px;border:1px solid var(--rule);cursor:zoom-in;margin-bottom:14px}
+.voice{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:12px;margin-bottom:16px}
+.voice-row{display:flex;align-items:center;gap:10px}
+.rec{width:40px;height:40px;border-radius:50%;border:none;background:var(--bad);color:#fff;cursor:pointer;flex:none;display:grid;place-items:center}
+.rec.on{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(184,65,15,.18)}}
+.voice small{color:var(--ink-3);font-size:12.5px}
+.voice textarea{width:100%;margin-top:10px;min-height:96px;border:1px solid var(--rule);border-radius:6px;padding:8px;background:#fff;font-size:13.5px;resize:vertical}
+.voice .src{font-size:12px;color:var(--ink-3);margin-top:6px}
+.go{width:100%;padding:12px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600;font-size:15px;cursor:pointer}
+.go:disabled{opacity:.55;cursor:progress}
+.saved{margin-top:14px;font-size:13px;color:var(--ink-3)}
+.saved select{width:100%;margin-top:6px;padding:6px;border-radius:6px;border:1px solid var(--rule);background:var(--sheet)}
+
+/* evidence marker: the one bold element */
+.mk{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:22px;padding:0 6px;
+  background:var(--marker);color:var(--marker-ink);font:700 12px/1 "IBM Plex Sans Condensed",sans-serif;
+  border-radius:3px 3px 3px 3px;clip-path:polygon(0 0,100% 0,100% 72%,50% 100%,0 72%);padding-bottom:4px;
+  border:none;cursor:pointer;vertical-align:middle;margin:0 2px}
+.mk:hover,.mk.hl{background:#ffd76b;transform:translateY(-1px)}
+.mk.missing{background:#e3c3b6;color:#5a1d05}
+
+/* trace */
+.stages{display:flex;gap:6px;margin-bottom:16px}
+.stage{flex:1;font-size:12.5px;padding:6px 8px;border-radius:6px;background:#dde3eb;color:var(--ink-3);text-align:center}
+.stage.active{background:var(--ink);color:#fff}
+.stage.done{background:#c9d7e8;color:var(--ink)}
+.trace{list-style:none;margin:0;padding:0;position:relative}
+.trace:before{content:"";position:absolute;left:14px;top:4px;bottom:4px;width:2px;background:var(--rule)}
+.step{position:relative;padding:0 0 14px 40px}
+.step .dot{position:absolute;left:8px;top:6px;width:14px;height:14px;border-radius:50%;background:var(--paper);border:2px solid var(--ink-3)}
+.step.think .dot{border-color:var(--ink-2);background:var(--ink-2)}
+.step.tool .dot{border-color:#b8941f;background:var(--marker)}
+.step.verify .dot{border-color:var(--ok);background:var(--ok)}
+.step.reject .dot{border-color:var(--bad);background:var(--bad)}
+.step.err .dot{background:var(--bad);border-color:var(--bad)}
+.thought{color:var(--ink-2);font-size:14px}
+.call{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:9px 11px;cursor:pointer}
+.call:hover{border-color:var(--ink-3)}
+.call .top{display:flex;gap:8px;align-items:center}
+.call .name{font-weight:600;font-size:13.5px}
+.call .sum{font-size:12.5px;color:var(--ink-3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.call code{font-size:12px;color:var(--ink-2);display:block;margin-top:4px;white-space:pre-wrap;word-break:break-word}
+.call.pending .sum{font-style:italic}
+.status{font-size:13px;color:var(--ink-3)}
+.problems{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--bad)}
+.empty{color:var(--ink-3);font-size:14px;max-width:46ch}
+
+/* casefile */
+.sheet{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:26px 28px 30px;position:relative;min-height:300px}
+.sheet h1{font:700 23px/1.25 "IBM Plex Sans Condensed",sans-serif;margin:0 0 10px;max-width:30ch}
+.facts{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--rule)}
+.facts b{color:var(--ink)}
+.sev{padding:1px 8px;border-radius:4px;background:var(--bad);color:#fff;font-weight:600}
+.sheet h3{font:600 15px/1.3 "IBM Plex Sans",sans-serif;margin:20px 0 8px}
+.claim{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;margin:0 -8px;border-radius:6px}
+.claim.hl{background:#fff4cf}
+.claim .txt{flex:1}
+.claim .refs{flex:none;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px;max-width:40%}
+.claim .time{font-weight:600;white-space:nowrap;margin-right:6px}
+.verdict{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:4px;margin-left:6px;vertical-align:1px}
+.v-SUPPORTED{background:var(--ok-bg);color:var(--ok)}
+.v-PARTIAL{background:var(--warn-bg);color:var(--warn)}
+.v-UNSUPPORTED{background:var(--bad-bg);color:var(--bad)}
+.why{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.rc{border-left:3px solid var(--ink);padding-left:12px}
+.conf{font-size:13px;color:var(--ink-3)}
+.actions li,.questions li{margin-bottom:6px}
+.actions{padding-left:18px}
+pre.q{background:#eef2f6;border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font-size:12.5px;white-space:pre-wrap;word-break:break-word;margin:6px 0}
+.stamp{position:absolute;top:22px;right:22px;transform:rotate(-8deg);border:3px solid currentColor;border-radius:6px;padding:4px 12px;
+  font:700 16px/1.1 "IBM Plex Sans Condensed",sans-serif;text-align:center;background:rgba(247,249,251,.85)}
+.stamp small{display:block;font:500 11px/1.3 "IBM Plex Sans",sans-serif}
+.stamp.ok{color:var(--ok)} .stamp.bad{color:var(--bad)} .stamp.wait{color:var(--ink-3);border-style:dashed}
+.stamp.land{animation:stamp .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes stamp{from{transform:rotate(-8deg) scale(2.2);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+.toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px}
+.btn{border:1px solid var(--rule);background:var(--sheet);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13.5px}
+.btn:hover{border-color:var(--ink-3)}
+.stats{font-size:12.5px;color:var(--ink-3);margin-top:18px;padding-top:12px;border-top:1px solid var(--rule)}
+
+/* evidence drawer */
+dialog{border:none;border-radius:12px;padding:0;width:min(820px,94vw);max-height:86vh;background:var(--sheet);color:var(--ink);box-shadow:0 20px 60px rgba(20,33,61,.35)}
+dialog::backdrop{background:rgba(20,33,61,.45)}
+.dlg-h{display:flex;gap:12px;align-items:center;padding:16px 20px;border-bottom:1px solid var(--rule)}
+.dlg-h h4{margin:0;font-size:16px;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.dlg-b{padding:16px 20px;overflow:auto;max-height:70vh}
+.dlg-b .meta{font-size:13px;color:var(--ink-3);margin-bottom:10px}
+.dlg-b pre{background:#eef2f6;border-radius:8px;padding:12px;font-size:12.5px;white-space:pre-wrap;word-break:break-word;margin:0}
+table.rows{border-collapse:collapse;font-size:13px;margin:6px 0 12px;width:100%}
+table.rows th,table.rows td{border-bottom:1px solid var(--rule);padding:4px 8px;text-align:left}
+table.rows th{color:var(--ink-3);font-weight:600}
+.dlg-b img{max-width:100%;border-radius:6px}
+
+@media (max-width:1100px){
+  html,body{height:auto}
+  body{display:block}
+  main{display:block}
+  section.col{overflow:visible}
+  section.col+section.col{border-left:none;border-top:1px solid var(--rule)}
+}
+@media (max-width:600px){header{flex-wrap:wrap;padding:12px 16px}section.col{padding:16px}.sheet{padding:18px 16px}.stamp{position:static;display:inline-block;margin-bottom:12px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="22" height="24" viewBox="0 0 22 24" aria-hidden="true"><path d="M2 0h18v17l-9 7-9-7z" fill="#f2c14e"/><text x="11" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#2b2100" font-family="IBM Plex Sans Condensed">E</text></svg>
+    Casefile
+  </div>
+  <span class="tagline">From alert to a verified escalation, every claim backed by evidence</span>
+  <div class="models" id="models"></div>
+</header>
+
+<main>
+  <section class="col" aria-labelledby="h-intake">
+    <h2 id="h-intake">Incoming incident</h2>
+    <div class="scenarios" id="scenarios" role="group" aria-label="Incident"></div>
+    <div class="ticket" id="ticket"></div>
+    <img class="shot" id="shot" alt="Screenshot attached to the ticket">
+    <div class="voice">
+      <div class="voice-row">
+        <button class="rec" id="rec" aria-label="Record voice note">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="1" width="6" height="9" rx="3" fill="#fff"/><path d="M3 8a5 5 0 0 0 10 0M8 13v2" stroke="#fff" stroke-width="1.6" fill="none"/></svg>
+        </button>
+        <div><strong>Reporter's voice note</strong><br><small id="rec-hint">Record it, or edit the transcript below</small></div>
+      </div>
+      <textarea id="transcript" aria-label="Voice note transcript"></textarea>
+      <div class="src" id="transcript-src">Typed text (no recording yet)</div>
+    </div>
+    <button class="go" id="go">Investigate</button>
+    <div class="saved">
+      <label for="saved">Replay a saved investigation</label>
+      <select id="saved"><option value="">Choose a run…</option></select>
+    </div>
+  </section>
+
+  <section class="col" aria-labelledby="h-trace">
+    <h2 id="h-trace">Investigation</h2>
+    <div class="stages" id="stages">
+      <div class="stage" data-s="intake">Intake</div>
+      <div class="stage" data-s="investigate">Investigate</div>
+      <div class="stage" data-s="verify">Verify</div>
+      <div class="stage" data-s="done">Escalate</div>
+    </div>
+    <ol class="trace" id="trace"></ol>
+    <p class="empty" id="trace-empty">The agent reads the ticket, the voice note and the screenshot, then queries logs, the database, metrics and deployments on its own. Each result becomes a numbered piece of evidence.</p>
+  </section>
+
+  <section class="col" aria-labelledby="h-case">
+    <h2 id="h-case">Escalation casefile</h2>
+    <div class="toolbar" id="toolbar" hidden>
+      <button class="btn" id="copy-md">Copy as Markdown</button>
+      <button class="btn" id="dl-json">Download JSON</button>
+    </div>
+    <div class="sheet" id="sheet"><p class="empty">The casefile appears here once the agent submits it. An independent verifier checks every claim against the evidence it cites before it goes to the development team.</p></div>
+  </section>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dlg-h"><span class="mk" id="dlg-mk"></span><h4 id="dlg-title"></h4><button class="btn" id="dlg-close">Close</button></div>
+  <div class="dlg-b" id="dlg-body"></div>
+</dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let scenarios = [], current = null, evidence = {}, runId = null, finalResult = null, lastCasefile = null, lastReport = null;
+let transcriptSource = null;
+
+/* ---------- boot ---------- */
+async function boot(){
+  const [cfg, sc] = await Promise.all([fetch("/api/config").then(r=>r.json()), fetch("/api/scenarios").then(r=>r.json())]);
+  $("#models").innerHTML = [["Agent",cfg.agent],["Verifier",cfg.verifier],["Vision",cfg.vision],["Voice",{label:cfg.voice.model,ready:cfg.voice.ready}]]
+    .map(([k,v]) => `<span class="model ${v.ready?"":"off"}" title="${v.ready?"":"API key missing"}">${k} <b>${esc(v.label)}</b></span>`).join("");
+  scenarios = sc;
+  $("#scenarios").innerHTML = sc.map(s => `<button class="scenario" data-id="${s.id}" aria-pressed="false"><strong>${esc(s.title)}</strong><span>${esc(s.ticket.split("|")[0])} · ${esc(s.now.slice(0,16).replace("T"," "))}</span></button>`).join("");
+  $("#scenarios").addEventListener("click", e => { const b = e.target.closest(".scenario"); if (b) pick(b.dataset.id); });
+  pick(sc[0].id);
+  loadSaved();
+}
+function pick(id){
+  current = scenarios.find(s => s.id === id);
+  document.querySelectorAll(".scenario").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === id));
+  $("#ticket").textContent = current.ticket;
+  $("#shot").src = `/api/scenarios/${id}/screenshot`;
+  $("#transcript").value = current.voice_note_script;
+  transcriptSource = null;
+  $("#transcript-src").textContent = "Typed text (no recording yet)";
+}
+async function loadSaved(){
+  const runs = await fetch("/api/saved").then(r=>r.json());
+  $("#saved").innerHTML = `<option value="">Choose a run…</option>` + runs.map(r => `<option value="${r.id}">${esc(r.scenario)} — ${esc(r.title.slice(0,60))}</option>`).join("");
+}
+
+/* ---------- voice recording: 16 kHz mono 16-bit WAV, encoded in the browser ---------- */
+let recCtx = null, recNode = null, recStream = null, recChunks = [], recRate = 48000;
+$("#rec").addEventListener("click", async () => {
+  if (recCtx) return stopRec();
+  try { recStream = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1, echoCancellation:true, noiseSuppression:true}}); }
+  catch { $("#rec-hint").textContent = "Microphone blocked. Allow it in the browser to record."; return; }
+  recCtx = new AudioContext(); recRate = recCtx.sampleRate; recChunks = [];
+  const src = recCtx.createMediaStreamSource(recStream);
+  recNode = recCtx.createScriptProcessor(4096, 1, 1);
+  recNode.onaudioprocess = e => recChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+  src.connect(recNode); recNode.connect(recCtx.destination);
+  $("#rec").classList.add("on"); $("#rec").setAttribute("aria-label","Stop recording");
+  $("#rec-hint").textContent = "Recording… click again to stop";
+});
+async function stopRec(){
+  recNode.disconnect(); recStream.getTracks().forEach(t => t.stop()); await recCtx.close(); recCtx = null;
+  $("#rec").classList.remove("on"); $("#rec").setAttribute("aria-label","Record voice note");
+  const wav = encodeWav(recChunks, recRate, 16000);
+  $("#rec-hint").textContent = "Transcribing with Muse Voice Transcribe…";
+  const fd = new FormData(); fd.append("audio", new Blob([wav], {type:"audio/wav"}), "note.wav"); fd.append("scenario_id", current.id);
+  const r = await fetch("/api/transcribe", {method:"POST", body:fd});
+  if (!r.ok) { $("#rec-hint").textContent = "Transcription failed: " + (await r.json()).detail; return; }
+  const t = await r.json();
+  $("#transcript").value = t.text;
+  transcriptSource = t.model;
+  $("#transcript-src").textContent = `Transcribed by ${t.model} in ${t.latency_s}s · biased toward: ${t.keywords.slice(0,4).join(", ")}${t.keywords.length>4?"…":""}`;
+  $("#rec-hint").textContent = "Done. You can edit the transcript.";
+}
+function encodeWav(chunks, inRate, outRate){
+  const len = chunks.reduce((a,c)=>a+c.length,0), data = new Float32Array(len); let o = 0;
+  for (const c of chunks){ data.set(c,o); o += c.length; }
+  const ratio = inRate/outRate, n = Math.floor(len/ratio), buf = new ArrayBuffer(44 + n*2), v = new DataView(buf);
+  const w = (p,s) => [...s].forEach((ch,i)=>v.setUint8(p+i,ch.charCodeAt(0)));
+  w(0,"RIFF"); v.setUint32(4,36+n*2,true); w(8,"WAVE"); w(12,"fmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,outRate,true); v.setUint32(28,outRate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,"data"); v.setUint32(40,n*2,true);
+  for (let i=0;i<n;i++){ const s = Math.max(-1, Math.min(1, data[Math.floor(i*ratio)])); v.setInt16(44+i*2, s<0?s*0x8000:s*0x7fff, true); }
+  return buf;
+}
+
+/* ---------- run ---------- */
+$("#go").addEventListener("click", async () => {
+  reset();
+  $("#go").disabled = true; $("#go").textContent = "Investigating…";
+  const body = {scenario_id: current.id, use_screenshot: true,
+    transcript: {text: $("#transcript").value, source: transcriptSource || "typed"}};
+  const r = await fetch("/api/runs", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}).then(r=>r.json());
+  runId = r.run_id;
+  const es = new EventSource(`/api/runs/${runId}/events`);
+  es.onmessage = m => handle(JSON.parse(m.data));
+  es.addEventListener("end", () => { es.close(); done(); });
+  es.onerror = () => { es.close(); done(); };
+});
+$("#saved").addEventListener("change", async e => {
+  if (!e.target.value) return;
+  reset(); runId = e.target.value;
+  const {events} = await fetch(`/api/saved/${runId}`).then(r=>r.json());
+  const s = events.find(ev => ev.type === "final")?.result?.scenario; if (s) pick(s);
+  $("#go").disabled = true; $("#go").textContent = "Replaying…";
+  for (let i=0;i<events.length;i++){
+    handle(events[i]);
+    const gap = i+1 < events.length ? (events[i+1].t - events[i].t) * 1000 : 0;
+    await new Promise(r => setTimeout(r, Math.min(Math.max(gap, 60), 1400)));
+  }
+  done();
+});
+function done(){ $("#go").disabled = false; $("#go").textContent = "Investigate"; loadSaved(); }
+function reset(){
+  evidence = {}; finalResult = null; lastCasefile = null; lastReport = null;
+  $("#trace").innerHTML = ""; $("#trace-empty").hidden = true; $("#toolbar").hidden = true;
+  document.querySelectorAll(".stage").forEach(s => s.className = "stage");
+  $("#sheet").innerHTML = `<p class="empty">Waiting for the agent to submit the casefile…</p>`;
+}
+
+/* ---------- events ---------- */
+const order = ["intake","investigate","verify","done"];
+let statusLi = null;
+function step(cls, html){
+  const li = document.createElement("li"); li.className = "step " + cls; li.innerHTML = `<span class="dot"></span>${html}`;
+  $("#trace").appendChild(li); li.scrollIntoView({block:"nearest"}); return li;
+}
+function handle(ev){
+  switch (ev.type){
+    case "stage": {
+      const idx = order.indexOf(ev.stage);
+      document.querySelectorAll(".stage").forEach(s => { const i = order.indexOf(s.dataset.s); s.className = "stage" + (i < idx ? " done" : i === idx ? " active" : ""); });
+      if (ev.stage === "done") document.querySelectorAll(".stage").forEach(s => s.className = "stage done");
+      break;
+    }
+    case "status":
+      if (!statusLi) statusLi = step("status-step", `<div class="status"></div>`);
+      statusLi.querySelector(".status").textContent = ev.text; $("#trace").appendChild(statusLi);
+      break;
+    case "evidence": {
+      const e = ev.evidence; evidence[e.id] = e;
+      const pending = document.querySelector(`.call[data-pending="1"][data-name="${e.source}"]`);
+      if (pending){
+        pending.removeAttribute("data-pending"); pending.classList.remove("pending"); pending.dataset.ev = e.id;
+        pending.querySelector(".slot").outerHTML = mk(e.id);
+        pending.querySelector(".sum").textContent = e.summary;
+      } else if (["ticket","voice","screenshot"].includes(e.kind)) {
+        step("tool", `<div class="call" data-ev="${e.id}"><div class="top">${mk(e.id)}<span class="name">${esc(e.title)}</span></div><div class="sum">${esc(e.summary)}</div><div class="sum">${esc(e.source)}</div></div>`);
+      }
+      break;
+    }
+    case "model_text":
+      step("think", `<div class="thought">${esc(ev.text)}</div>`);
+      break;
+    case "tool_call": {
+      const a = ev.args || {};
+      const argText = a.query || Object.entries(a).map(([k,v])=>`${k}=${v}`).join("  ");
+      step("tool", `<div class="call pending" data-pending="1" data-name="${esc(ev.name)}"><div class="top"><span class="slot mk missing">…</span><span class="name">${esc(ev.name)}</span></div>${argText ? `<code>${esc(argText)}</code>` : ""}<div class="sum">running…</div></div>`);
+      break;
+    }
+    case "casefile":
+      lastCasefile = ev.casefile; lastReport = null;
+      renderCasefile(ev.casefile, null, ev.attempt);
+      step("think", `<div class="thought"><b>Casefile submitted</b> (attempt ${ev.attempt}). Sending it to the independent verifier.</div>`);
+      break;
+    case "verification":
+      lastReport = ev.report;
+      renderCasefile(lastCasefile, ev.report);
+      const c = ev.report.counts;
+      step(ev.report.passed ? "verify" : "reject", `<div class="thought"><b>${ev.report.passed ? "Verified" : "Rejected by verifier"}</b> — ${c.SUPPORTED} supported, ${c.PARTIAL} partial, ${c.UNSUPPORTED} unsupported. <span class="status">${esc(ev.report.verifier)}</span></div>`);
+      break;
+    case "revision":
+      step("reject", `<div class="thought">Agent is fixing the rejected claims:</div><ul class="problems">${ev.problems.slice(0,6).map(p => `<li>${esc(p.claim)}: ${esc(p.reason)}</li>`).join("")}</ul>`);
+      break;
+    case "final":
+      finalResult = ev.result; if (statusLi) { statusLi.remove(); statusLi = null; }
+      renderCasefile(ev.result.casefile, ev.result.verification, null, ev.result);
+      const s = ev.result.stats;
+      step("verify", `<div class="thought"><b>Ready to escalate.</b> ${s.tool_calls} tool calls, ${Object.keys(evidence).length} pieces of evidence, ${s.duration_s}s.</div>`);
+      $("#toolbar").hidden = false;
+      break;
+    case "error":
+      if (statusLi) { statusLi.remove(); statusLi = null; }
+      step("err", `<div class="thought"><b>Stopped:</b> ${esc(ev.message)}</div>`);
+      break;
+  }
+}
+
+/* ---------- casefile rendering ---------- */
+function mk(id){ return `<button class="mk ${evidence[id] ? "" : "missing"}" data-ev="${esc(id)}" aria-label="Evidence ${esc(id)}">${esc(id)}</button>`; }
+function claimRow(id, item, report, timeKey){
+  if (!item || !item.text) return "";
+  const r = report?.claims?.[id];
+  const verdict = r ? `<span class="verdict v-${r.verdict}">${r.verdict === "SUPPORTED" ? "Supported" : r.verdict === "PARTIAL" ? "Partial" : "Unsupported"}</span>` : "";
+  const why = r && r.verdict !== "SUPPORTED" && r.reason ? `<div class="why">${esc(r.reason)}</div>` : "";
+  return `<div class="claim" data-claim="${id}" data-refs="${(item.evidence||[]).join(" ")}"><div class="txt">${timeKey ? `<span class="time">${esc(item.time)}</span>` : ""}${esc(item.text)}${verdict}${why}</div><div class="refs">${(item.evidence||[]).map(mk).join("")}</div></div>`;
+}
+let stampState = null;
+function renderCasefile(cf, report, attempt, result){
+  if (!cf) return;
+  let stamp;
+  if (!report) stamp = `<div class="stamp wait">Checking<small>attempt ${attempt || 1}</small></div>`;
+  else if (report.passed) stamp = `<div class="stamp ok">Verified<small>${report.counts.SUPPORTED} of ${Object.keys(report.claims).length} claims supported</small></div>`;
+  else stamp = `<div class="stamp bad">${result ? "Escalated with gaps" : "Rejected"}<small>${report.counts.UNSUPPORTED} unsupported · ${report.counts.PARTIAL} partial</small></div>`;
+  const newState = report ? (report.passed ? "ok" : (result ? "badf" : "bad")) : "wait";
+  const land = newState !== stampState && report; stampState = newState;
+  const rc = cf.root_cause || {};
+  $("#sheet").innerHTML = `
+    ${stamp.replace('class="stamp', land ? 'class="stamp land' : 'class="stamp')}
+    <h1>${esc(cf.title)}</h1>
+    <div class="facts"><span class="sev">${esc(cf.severity)}</span><span>Decision <b>${esc(cf.decision)}</b></span><span>Owner <b>${esc(cf.owner_team)}</b></span></div>
+    ${claimRow("summary", cf.summary, report)}
+    <h3>Impact</h3>${(cf.impact||[]).map((it,i)=>claimRow(`impact.${i}`, it, report)).join("")}
+    <h3>Timeline</h3>${(cf.timeline||[]).map((it,i)=>claimRow(`timeline.${i}`, it, report, true)).join("")}
+    <h3>Probable root cause <span class="conf">confidence ${Math.round((rc.confidence||0)*100)}%</span></h3>
+    <div class="rc">${claimRow("root_cause", rc, report)}</div>
+    ${(cf.ruled_out||[]).length ? `<h3>Ruled out</h3>${cf.ruled_out.map((it,i)=>claimRow(`ruled_out.${i}`, it, report)).join("")}` : ""}
+    ${(cf.next_actions||[]).length ? `<h3>Next actions</h3><ul class="actions">${cf.next_actions.map(a=>`<li><b>${esc(a.owner)}</b>: ${esc(a.text)}</li>`).join("")}</ul>` : ""}
+    ${(cf.verification_queries||[]).length ? `<h3>How the dev team can verify</h3>${cf.verification_queries.map(q=>`<pre class="q">${esc(q)}</pre>`).join("")}` : ""}
+    ${(cf.open_questions||[]).length ? `<h3>Open questions</h3><ul class="actions questions">${cf.open_questions.map(q=>`<li>${esc(q)}</li>`).join("")}</ul>` : ""}
+    ${result ? `<div class="stats">Investigated by ${esc(result.models.agent)} · verified by ${esc(result.models.verifier)} · screenshot read by ${esc(result.models.vision)} · ${result.stats.model_calls} model calls, ${result.stats.tool_calls} tool calls, ${(result.stats.prompt_tokens + result.stats.completion_tokens).toLocaleString()} tokens</div>` : ""}`;
+}
+
+/* ---------- evidence linking + drawer ---------- */
+document.addEventListener("mouseover", e => {
+  const m = e.target.closest(".mk"); if (!m) return;
+  const id = m.dataset.ev;
+  document.querySelectorAll(".claim").forEach(c => c.classList.toggle("hl", c.dataset.refs.split(" ").includes(id)));
+  document.querySelectorAll(".mk").forEach(x => x.classList.toggle("hl", x.dataset.ev === id));
+});
+document.addEventListener("mouseout", e => { if (e.target.closest(".mk")) document.querySelectorAll(".hl").forEach(x => x.classList.remove("hl")); });
+document.addEventListener("click", e => {
+  const m = e.target.closest(".mk, .call[data-ev]"); if (!m) return;
+  e.preventDefault(); openEvidence(m.dataset.ev);
+});
+function openEvidence(id){
+  const e = evidence[id];
+  $("#dlg-mk").textContent = id;
+  if (!e){ $("#dlg-title").textContent = "Unknown evidence"; $("#dlg-body").innerHTML = `<p>The casefile cites ${esc(id)}, but no such evidence was collected. The verifier rejects claims like this.</p>`; $("#dlg").showModal(); return; }
+  $("#dlg-title").textContent = e.title;
+  const c = e.content;
+  let body = `<div class="meta">Source: ${esc(e.source)}${Object.keys(e.args||{}).length ? " · " + esc(JSON.stringify(e.args)) : ""}</div>`;
+  if (e.kind === "screenshot" && current) body += `<img src="/api/scenarios/${current.id}/screenshot" alt=""><p></p>`;
+  if (c && typeof c === "object" && Array.isArray(c.rows)){
+    body += `<pre>${esc(c.query)}</pre><table class="rows"><thead><tr>${c.columns.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${c.rows.map(r=>`<tr>${r.map(x=>`<td class="mono">${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table>${c.truncated ? "<p class='meta'>Truncated to 40 rows.</p>" : ""}`;
+  } else if (c && typeof c === "object" && Array.isArray(c.lines)){
+    body += `<div class="meta">${c.total_matches} matching line(s)</div><pre>${esc(c.lines.map(l => `${l.ts}  ${l.level.padEnd(5)} ${l.service}  ${l.msg}${l.fields ? "  " + JSON.stringify(l.fields) : ""}`).join("\n"))}</pre>`;
+  } else if (c && typeof c === "object" && c.content){
+    body += `<pre>${esc(c.content)}</pre>`;
+  } else {
+    body += `<pre>${esc(typeof c === "string" ? c : JSON.stringify(c, null, 2))}</pre>`;
+  }
+  $("#dlg-body").innerHTML = body; $("#dlg").showModal();
+}
+$("#dlg-close").addEventListener("click", () => $("#dlg").close());
+$("#shot").addEventListener("click", () => { $("#dlg-mk").textContent = "E3"; $("#dlg-title").textContent = "Attached screenshot"; $("#dlg-body").innerHTML = `<img src="${$("#shot").src}" alt="">`; $("#dlg").showModal(); });
+
+/* ---------- export ---------- */
+$("#copy-md").addEventListener("click", async () => {
+  const md = await fetch(`/api/runs/${runId}/markdown`).then(r=>r.text());
+  await navigator.clipboard.writeText(md); $("#copy-md").textContent = "Copied"; setTimeout(()=>$("#copy-md").textContent = "Copy as Markdown", 1500);
+});
+$("#dl-json").addEventListener("click", () => {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(finalResult, null, 2)], {type:"application/json"}));
+  a.download = `casefile-${runId}.json`; a.click();
+});
+boot();
+</script>
+</body>
+</html>

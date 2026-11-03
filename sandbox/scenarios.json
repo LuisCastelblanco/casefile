@@ -1,0 +1,29 @@
+[
+  {
+    "id": "recon-spike",
+    "title": "Reconciliation exceptions spike",
+    "now": "2026-10-31T07:05:00-05:00",
+    "ticket": "INC-30412 | P2 | Auto-created from alert recon.exceptions.breach. Card settlement reconciliation for run 2026-10-31 finished with exceptions above threshold. Finance close team blocked until the run is clean. Assigned: L2 Payments.",
+    "screenshot": "recon.png",
+    "voice_note_script": "Hey, it's Andrea from finance ops. The settlement recon this morning blew up, way over the usual handful of exceptions. I also saw the processor file came in late again, so maybe that's it? We need to close the books by noon, can you tell me if we can trust these numbers or if someone needs to rerun something?",
+    "keywords": ["reconciliation", "settlement", "recon", "processor file", "exceptions", "finance ops"]
+  },
+  {
+    "id": "otp-delay",
+    "title": "OTP codes arriving late",
+    "now": "2026-11-02T09:10:00-05:00",
+    "ticket": "INC-30455 | P1 | Call center reports customers receiving login and payment OTP codes several minutes late; many codes expire before they arrive. Alert otp.dispatch.lag firing since 08:52. Assigned: L2 Payments.",
+    "screenshot": "otp.png",
+    "voice_note_script": "Hi, this is Mateo from the call center floor. Since around eight thirty we have a queue of people saying the SMS code arrives like five, eight minutes late, so it's already expired. Someone said the SMS provider has an outage on their status page. Customers can't log in or pay. Please, this is urgent.",
+    "keywords": ["OTP", "SMS", "Altavoz", "dispatcher", "status page", "call center"]
+  },
+  {
+    "id": "double-payout",
+    "title": "Merchants paid twice",
+    "now": "2026-11-03T08:30:00-05:00",
+    "ticket": "INC-30471 | P1 | Support ticket SUP-88213: merchant reports two identical settlement deposits for batch B-20261102. Need to know if this is isolated or systemic before finance-ops acts. Assigned: L2 Payments.",
+    "screenshot": "payouts.png",
+    "voice_note_script": "Hi, Sara from merchant support. A merchant, Comercio 1013, says they got the November second settlement twice, exact same amount. I don't know if it's just them or everyone. Finance wants to know how many merchants and how much money before they do any reversal, and whether tonight's batch should run.",
+    "keywords": ["payout", "settlement", "batch", "merchant", "reversal", "ledger", "idempotency"]
+  }
+]
