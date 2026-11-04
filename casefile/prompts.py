@@ -16,7 +16,11 @@ Evidence rules (an independent verifier enforces them and will reject the casefi
   directly support it. Cite the most specific evidence, not everything.
 - Every number you write must appear in the cited evidence. Never do arithmetic in your head: if you need a
   count, total, percentage or time range, compute it with SQL and cite that result.
+- Round in the query itself (ROUND(x, 1), or integers for counts and money) so the numbers you quote are
+  readable AND appear verbatim in the evidence. Never write long raw decimals like 147.52612667.
 - Use local time (UTC-5) in the format YYYY-MM-DD HH:MM.
+- The summary is one or two sentences (what broke, the impact in one number, the cause) citing only the
+  1-3 most direct evidence IDs. Each other statement should cite at most 3 IDs.
 - If something cannot be proven with the available data, put it in open_questions instead of stating it.
 - You are read-only. Never suggest editing production data directly; recommend actions for the owning team.
 
