@@ -59,15 +59,16 @@ class LLM:
         return self.cfg.label
 
     def chat(self, messages: list[dict], tools: list[dict] | None = None, tool_choice: Any = None,
-             json_mode: bool = False, max_tokens: int = 8000) -> Reply:
+             json_mode: bool = False, max_tokens: int = 16000, reasoning_effort: str | None = None) -> Reply:
         if self.cfg.provider == "mock":
             return self.mock.chat(messages, tools=tools, json_mode=json_mode)
         kwargs: dict[str, Any] = {"model": self.cfg.model, "messages": messages, "max_tokens": max_tokens}
         if tools:
             kwargs["tools"] = tools
             kwargs["tool_choice"] = tool_choice or "auto"
-        if self.cfg.reasoning_effort:
-            kwargs["reasoning_effort"] = self.cfg.reasoning_effort
+        effort = reasoning_effort or self.cfg.reasoning_effort
+        if effort and self.cfg.reasoning_effort:  # only send it to providers configured for it
+            kwargs["reasoning_effort"] = effort
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
         t0 = time.monotonic()
@@ -83,7 +84,19 @@ class LLM:
                 resp = self._client.chat.completions.create(**kwargs)
             except Exception as exc2:
                 raise LLMError(f"{self.label}: {exc2}") from exc2
-        msg = resp.choices[0].message
+        choice = resp.choices[0]
+        msg = choice.message
+        if not (msg.content or msg.tool_calls) and choice.finish_reason == "length":
+            # Reasoning used the whole token budget before any answer: retry with more room, less thinking.
+            kwargs["max_tokens"] = max_tokens * 2
+            if "reasoning_effort" in kwargs:
+                kwargs["reasoning_effort"] = "low"
+            try:
+                resp = self._client.chat.completions.create(**kwargs)
+            except Exception as exc:
+                raise LLMError(f"{self.label}: {exc}") from exc
+            choice = resp.choices[0]
+            msg = choice.message
         calls = [ToolCall(c.id, c.function.name, c.function.arguments or "{}") for c in (msg.tool_calls or [])]
         assistant: dict[str, Any] = {"role": "assistant", "content": msg.content or ""}
         if calls:

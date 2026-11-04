@@ -24,7 +24,7 @@ from .voice import VoiceError, transcribe
 
 app = FastAPI(title="Casefile")
 WEB = ROOT / "web"
-SCENARIOS = {s["id"]: s for s in json.loads((SANDBOX_DIR / "scenarios.json").read_text())}
+SCENARIOS = {s["id"]: s for s in json.loads((SANDBOX_DIR / "scenarios.json").read_text(encoding="utf-8"))}
 TOOLS = SandboxTools()
 RUNS: dict[str, dict] = {}
 RUNS_DIR.mkdir(exist_ok=True)
@@ -101,7 +101,7 @@ async def start_run(body: dict) -> dict:
                 png = (SANDBOX_DIR / "screenshots" / sc["screenshot"]).read_bytes()
             inv = Investigation(sc, make_llm("AGENT"), make_llm("VERIFIER"), make_llm("VISION"), TOOLS, emit)
             run["result"] = inv.run(transcript, png)
-            (RUNS_DIR / f"{run_id}.json").write_text(json.dumps({"events": run["events"]}, ensure_ascii=False))
+            (RUNS_DIR / f"{run_id}.json").write_text(json.dumps({"events": run["events"]}, ensure_ascii=False), encoding="utf-8")
         except (LLMError, Exception) as exc:  # surface any failure in the UI
             emit({"type": "error", "message": str(exc), "trace": traceback.format_exc()[-1500:]})
         finally:
@@ -133,7 +133,7 @@ async def run_events(run_id: str):
 def saved() -> list[dict]:
     out = []
     for f in sorted(RUNS_DIR.glob("*.json"), reverse=True)[:30]:
-        events = json.loads(f.read_text()).get("events", [])
+        events = json.loads(f.read_text(encoding="utf-8")).get("events", [])
         final = next((e for e in events if e["type"] == "final"), None)
         if final:
             r = final["result"]
@@ -147,7 +147,7 @@ def saved_run(run_id: str) -> JSONResponse:
     path = RUNS_DIR / f"{Path(run_id).name}.json"
     if not path.exists():
         _404()
-    return JSONResponse(json.loads(path.read_text()))
+    return JSONResponse(json.loads(path.read_text(encoding="utf-8")))
 
 
 @app.get("/api/runs/{run_id}/markdown", response_class=PlainTextResponse)
@@ -157,7 +157,7 @@ def run_markdown(run_id: str) -> str:
     if result is None:
         path = RUNS_DIR / f"{Path(run_id).name}.json"
         if path.exists():
-            final = next((e for e in json.loads(path.read_text())["events"] if e["type"] == "final"), None)
+            final = next((e for e in json.loads(path.read_text(encoding="utf-8"))["events"] if e["type"] == "final"), None)
             result = final["result"] if final else None
     if result is None:
         _404()

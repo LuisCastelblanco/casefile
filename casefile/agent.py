@@ -172,7 +172,8 @@ class Investigation:
             self.emit({"type": "status", "text": f"Reading screenshot with {self.vision.label}"})
             try:
                 reply = self.vision.chat([{"role": "user", "content": [{"type": "text", "text": VISION_PROMPT},
-                                                                       image_part]}], max_tokens=1500)
+                                                                       image_part]}], max_tokens=8000,
+                                         reasoning_effort="low")
                 self._usage(reply)
                 facts = reply.content.strip()
             except LLMError as exc:
@@ -225,13 +226,17 @@ class Investigation:
         if blocks:
             msgs = [{"role": "system", "content": VERIFIER_SYSTEM},
                     {"role": "user", "content": "\n\n".join(blocks)}]
-            try:
-                reply = self.verifier.chat(msgs, json_mode=True, max_tokens=4000)
-                self._usage(reply)
-                verdicts = extract_json(reply.content).get("verdicts", [])
-            except (LLMError, ValueError, json.JSONDecodeError) as exc:
-                verdicts = []
-                self.emit({"type": "status", "text": f"Verifier error: {exc}"})
+            verdicts = []
+            for attempt in range(2):  # an empty or unparseable reply must not count against the agent
+                try:
+                    reply = self.verifier.chat(msgs, json_mode=True, max_tokens=24000,
+                                               reasoning_effort=None if attempt == 0 else "low")
+                    self._usage(reply)
+                    verdicts = extract_json(reply.content).get("verdicts", [])
+                except (LLMError, ValueError, json.JSONDecodeError) as exc:
+                    self.emit({"type": "status", "text": f"Verifier reply unusable ({exc}); retrying"})
+                if verdicts:
+                    break
             for v in verdicts:
                 r = results.get(str(v.get("id")))
                 if r and r["verdict"] is None:

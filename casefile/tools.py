@@ -36,10 +36,10 @@ class SandboxTools:
             ensure_sandbox()
         self.data_dir = data_dir
         self.runbook_dir = runbook_dir
-        self._metrics = json.loads((data_dir / "metrics.json").read_text())
+        self._metrics = json.loads((data_dir / "metrics.json").read_text(encoding="utf-8"))
         self._logs: dict[str, list[dict]] = {}
         for f in sorted((data_dir / "logs").glob("*.jsonl")):
-            self._logs[f.stem] = [json.loads(line) for line in f.read_text().splitlines() if line.strip()]
+            self._logs[f.stem] = [json.loads(line) for line in f.read_text(encoding="utf-8").splitlines() if line.strip()]
 
     # ---------------------------------------------------------------- sql
     def _connect(self) -> sqlite3.Connection:
@@ -178,7 +178,7 @@ class SandboxTools:
         path = self.runbook_dir / f"{Path(name).stem}.md"
         if not path.exists():
             return {"error": f"No runbook {name!r}.", "available": sorted(p.stem for p in self.runbook_dir.glob('*.md'))}
-        return {"runbook": path.stem, "content": path.read_text()}
+        return {"runbook": path.stem, "content": path.read_text(encoding="utf-8")}
 
     # ------------------------------------------------------------ dispatch
     def execute(self, name: str, args: dict) -> dict:

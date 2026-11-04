@@ -92,7 +92,7 @@ def recon(db: sqlite3.Connection) -> None:
 
 
 def otp() -> None:
-    metrics = json.loads((DATA / "metrics.json").read_text())
+    metrics = json.loads((DATA / "metrics.json").read_text(encoding="utf-8"))
     lag = metrics["notification-dispatcher"]["dispatch_lag_p95_seconds"]
     prov = metrics["sms-gateway"]["provider_latency_p95_ms"]
     w, h = 1200, 720

@@ -38,7 +38,7 @@ def check(name, fn):
 def run_checks(llm: LLM) -> list[bool]:
     out = []
     out.append(check(f"chat [{llm.label}]", lambda: llm.chat([{"role": "user", "content": "Reply with the word ready."}],
-                                                             max_tokens=200).content.strip()[:60]))
+                                                             max_tokens=2000).content.strip()[:60]))
 
     def tools():
         msgs = [{"role": "user", "content": "How many reconciliation exceptions were there on 2026-10-31? Use the tool."}]
@@ -57,7 +57,7 @@ def run_checks(llm: LLM) -> list[bool]:
         url = "data:image/png;base64," + base64.b64encode(png).decode()
         r = llm.chat([{"role": "user", "content": [
             {"type": "text", "text": "What number is shown under EXCEPTIONS? Reply with the number only."},
-            {"type": "image_url", "image_url": {"url": url}}]}], max_tokens=300)
+            {"type": "image_url", "image_url": {"url": url}}]}], max_tokens=2000)
         return r.content.strip()[:60]
 
     out.append(check(f"image understanding [{llm.label}]", vision))

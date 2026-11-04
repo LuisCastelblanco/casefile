@@ -398,13 +398,13 @@ class Sandbox:
             f.unlink()
         for svc, entries in self.logs.items():
             entries.sort(key=lambda e: e["ts"])
-            with open(logdir / f"{svc}.jsonl", "w") as fh:
+            with open(logdir / f"{svc}.jsonl", "w", encoding="utf-8") as fh:
                 for e in entries:
                     fh.write(json.dumps(e) + "\n")
         for series in self.metrics.values():
             for pts in series.values():
                 pts.sort(key=lambda p: p[0])
-        (DATA / "metrics.json").write_text(json.dumps(self.metrics))
+        (DATA / "metrics.json").write_text(json.dumps(self.metrics), encoding="utf-8")
 
 
 def build() -> dict:
@@ -416,7 +416,7 @@ def build() -> dict:
         "payouts": sb.incident_payouts(),
     }
     sb.finish()
-    (DATA / "ground_truth.json").write_text(json.dumps(facts, indent=2))
+    (DATA / "ground_truth.json").write_text(json.dumps(facts, indent=2), encoding="utf-8")
     return facts
 
 

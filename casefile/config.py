@@ -12,7 +12,7 @@ def _load_dotenv() -> None:
     env = ROOT / ".env"
     if not env.exists():
         return
-    for line in env.read_text().splitlines():
+    for line in env.read_text(encoding="utf-8-sig").splitlines():  # utf-8-sig tolerates a BOM from Notepad
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue

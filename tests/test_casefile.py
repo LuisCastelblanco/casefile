@@ -12,8 +12,8 @@ from casefile.markdown import casefile_markdown  # noqa: E402
 from casefile.tools import SandboxTools  # noqa: E402
 
 tools = SandboxTools()  # builds the sandbox on first run
-SCENARIOS = {s["id"]: s for s in json.loads((SANDBOX_DIR / "scenarios.json").read_text())}
-TRUTH = json.loads((SANDBOX_DIR / "data" / "ground_truth.json").read_text())
+SCENARIOS = {s["id"]: s for s in json.loads((SANDBOX_DIR / "scenarios.json").read_text(encoding="utf-8"))}
+TRUTH = json.loads((SANDBOX_DIR / "data" / "ground_truth.json").read_text(encoding="utf-8"))
 
 
 def test_sql_is_read_only():

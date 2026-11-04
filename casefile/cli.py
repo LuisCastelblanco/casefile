@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -24,7 +25,12 @@ def make_llm(role: str) -> LLM:
 
 
 def main() -> None:
-    scenarios = {s["id"]: s for s in json.loads((SANDBOX_DIR / "scenarios.json").read_text())}
+    for stream in (sys.stdout, sys.stderr):  # Windows consoles default to cp1252
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except AttributeError:
+            pass
+    scenarios = {s["id"]: s for s in json.loads((SANDBOX_DIR / "scenarios.json").read_text(encoding="utf-8"))}
     ap = argparse.ArgumentParser()
     ap.add_argument("scenario", choices=sorted(scenarios))
     ap.add_argument("--voice", help="voice note to transcribe with Muse Voice Transcribe")
@@ -61,7 +67,7 @@ def main() -> None:
     result = inv.run(transcript, png)
     RUNS_DIR.mkdir(exist_ok=True)
     run_id = time.strftime("%Y%m%d-%H%M%S-cli")
-    (RUNS_DIR / f"{run_id}.json").write_text(json.dumps({"events": events}, ensure_ascii=False))
+    (RUNS_DIR / f"{run_id}.json").write_text(json.dumps({"events": events}, ensure_ascii=False), encoding="utf-8")
     print("\n" + casefile_markdown(result))
     print(f"saved run {run_id} (replay it from the UI)")
 
