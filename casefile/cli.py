@@ -59,6 +59,9 @@ def main() -> None:
             print(f"     {ev['evidence']['id']}: {ev['evidence']['summary'][:120]}")
         elif kind == "verification":
             print(f"[verifier] {ev['report']['counts']} passed={ev['report']['passed']}")
+            for claim_id, claim in ev["report"].get("claims", {}).items():
+                if claim.get("verdict") != "SUPPORTED":
+                    print(f"[verifier]   {claim_id} {claim.get('verdict')}: {claim.get('reason')}")
         elif kind == "revision":
             print(f"[verifier] sent back {len(ev['problems'])} problem(s)")
 

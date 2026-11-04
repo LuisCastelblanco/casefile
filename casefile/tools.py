@@ -135,15 +135,19 @@ class SandboxTools:
         pts = [p for p in series if (not start or p[0] >= start) and (not end or p[0] <= end)]
         if not pts:
             return {"service": service, "metric": metric, "points": [], "note": "no points in range"}
+        def r1(x):
+            v = round(x, 1)
+            return int(v) if v == int(v) else v
+
         vals = [p[1] for p in pts]
         step = max(1, len(pts) // 24)
         peak = max(pts, key=lambda p: p[1])
         return {
             "service": service, "metric": metric,
             "range": [pts[0][0], pts[-1][0]],
-            "summary": {"first": vals[0], "last": vals[-1], "min": min(vals), "max": max(vals),
+            "summary": {"first": r1(vals[0]), "last": r1(vals[-1]), "min": r1(min(vals)), "max": r1(max(vals)),
                         "max_at": peak[0], "points": len(vals)},
-            "sampled_points": pts[::step],
+            "sampled_points": [[p[0], r1(p[1])] for p in pts[::step]],
         }
 
     # --------------------------------------------------------- deployments
