@@ -133,7 +133,10 @@ async def run_events(run_id: str):
 def saved() -> list[dict]:
     out = []
     for f in sorted(RUNS_DIR.glob("*.json"), reverse=True)[:30]:
-        events = json.loads(f.read_text(encoding="utf-8")).get("events", [])
+        try:
+            events = json.loads(f.read_text(encoding="utf-8")).get("events", [])
+        except (OSError, ValueError):
+            continue  # empty or partially written run file
         final = next((e for e in events if e["type"] == "final"), None)
         if final:
             r = final["result"]

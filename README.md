@@ -4,6 +4,8 @@
 
 Built for the Meta Global AI Developer Hackathon (track: *Build for Your World*).
 
+![Casefile UI: a verified casefile with cited evidence](docs/casefile.png)
+
 ## The problem
 
 In production support for payments, the first responder (L2) does not fix code. Their job is to gather evidence, find what changed, measure the impact and escalate to the development team with enough proof that the developers can act immediately.
@@ -106,6 +108,8 @@ flowchart LR
 ## Built during the hackathon
 
 Everything in this repository was written during the hackathon building period (November 3–4, 2026): the sandbox and its three incidents, the agent and tools, the evidence ledger and verifier, the voice and vision intake, the server and the UI. No prior codebase is reused.
+
+**AI use:** I wrote this project with Claude Code (Anthropic) as a coding assistant. At runtime, Casefile uses only Meta models.
 
 ## What's next
 
